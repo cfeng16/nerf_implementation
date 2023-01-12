@@ -17,7 +17,7 @@ class nerfmodel(nn.Module):
         self.sigmoid = nn.Sigmoid()
         self.relu = nn.ReLU()
         self.net_last = nn.Linear(width, width)
-        self.delta = nn.Linear(width, 1)
+        self.sigma = nn.Linear(width, 1)
         self.rgb = nn.ModuleList([nn.Linear(dir_dim + width, width // 2)])
         self.rgb.append(nn.Linear(width // 2, 3))
     def forward(self, input_pts, dir):
@@ -29,7 +29,7 @@ class nerfmodel(nn.Module):
                 feature = self.net[i](torch.cat((feature, pts_copy), dim=-1))
             else:
                 feature = self.net[i](feature)
-        density = self.relu(self.delta(feature))
+        density = self.relu(self.sigma(feature))
         feature = self.net_last(feature)
         rgb_feature = torch.cat((feature, dir), dim=-1)
         rgb = self.sigmoid(self.rgb(rgb_feature))
