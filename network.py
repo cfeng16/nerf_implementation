@@ -33,7 +33,7 @@ class nerfmodel(nn.Module):
         feature = self.net_last(feature)
         rgb_feature = torch.cat((feature, dir), dim=-1)
         rgb = self.sigmoid(self.rgb(rgb_feature))
-        return density, rgb
+        return density,  rgb
     
         
 
