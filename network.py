@@ -29,11 +29,12 @@ class nerfmodel(nn.Module):
                 feature = self.net[i](torch.cat((feature, pts_copy), dim=-1))
             else:
                 feature = self.net[i](feature)
-        density = self.relu(self.sigma(feature))
+        #density = self.relu(self.sigma(feature))
+        density = self.sigma(feature)
         feature = self.net_last(feature)
         rgb_feature = torch.cat((feature, dir), dim=-1)
         rgb = self.sigmoid(self.rgb(rgb_feature))
-        return density,  rgb
+        return density, rgb
     
         
 

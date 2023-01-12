@@ -19,4 +19,3 @@ class positionalencoder(nn.Module):
             pe.append(torch.cos(self.freq_list[i]*x))
         pe = torch.cat(pe, dim=-1)
         return pe
-

@@ -11,7 +11,7 @@ def sample_rays(H, W, F, c2w):
     rays_o = c2w[:3, -1].expand(rays_d.shape)
     return rays_o, rays_d
 
-def stratified_sample(rays_o, rays_d, near, far, n_samples, device):
+def stratified_sampling(rays_o, rays_d, near, far, n_samples, device):
     t_vals = torch.linspace(0.0, 1.0, n_samples, device=device)
     z_vals = near * (1 - t_vals) + far * t_vals
     mids = (z_vals[1:] + z_vals[:-1]) / 2
@@ -23,7 +23,7 @@ def stratified_sample(rays_o, rays_d, near, far, n_samples, device):
     pts = rays_o[..., None, :] + rays_d[..., None, :] * z_vals[..., :, None]
     return pts, z_vals
 
-def hierarchical_sample(bins, weights, n_sample, device):
+def hierarchical_sampling(bins, weights, n_sample, device):
     pdf = (weights + 1e-5) / torch.sum(weights + 1e-5, dim=-1, keepdim=True)
     cdf = torch.cumsum(pdf, dim=-1)
     cdf = torch.cat((torch.zeros_like(cdf[..., :1]), cdf), dim=-1)
