@@ -23,7 +23,7 @@ def stratified_sampling(rays_o, rays_d, near, far, n_samples, device):
     pts = rays_o[..., None, :] + rays_d[..., None, :] * z_vals[..., :, None]
     return pts, z_vals
 
-def hierarchical_sampling(bins, weights, n_sample, device):
+def sample_pdf(bins, weights, n_sample, device):
     pdf = (weights + 1e-5) / torch.sum(weights + 1e-5, dim=-1, keepdim=True)
     cdf = torch.cumsum(pdf, dim=-1)
     cdf = torch.cat((torch.zeros_like(cdf[..., :1]), cdf), dim=-1)
@@ -39,10 +39,27 @@ def hierarchical_sampling(bins, weights, n_sample, device):
     cdf_d = torch.where(cdf_d < 1e-5, torch.ones_like(cdf_d, device=device), cdf_d)
     t = (u - cdf_val[..., 0]) / cdf_d
     samples = bins_val[..., 0] + t * (bins_val[..., 1] - bins_val[..., 0])
-
     return samples
 
 
+def hierarachical_sampling(rays_o, rays_d, z_vals, weights, n_samples):
+    z_vals_mid = .5 * (z_vals[..., 1:] + z_vals[..., :-1])
+    new_z_samples = sample_pdf(z_vals_mid, weights[..., 1:-1], n_samples)
+    new_z_samples = new_z_samples.detach()
+    z_vals_combined, _ = torch.sort(torch.cat([z_vals, new_z_samples], dim=-1), dim=-1)
+    pts = rays_o[..., None, :] + rays_d[..., None, :] * z_vals_combined[..., :, None]  # [N_rays, N_samples + n_samples, 3]
+    return pts, z_vals_combined, new_z_samples
+
+
+
+# if __name__ == "__main__":
+#     rays_o = torch.rand((25,3))
+#     rays_d = torch.rand((25,3))
+#     near = 2
+#     far = 6
+#     n_samples=20
+#     stratified_sampling(rays_o, rays_d, near, far, n_samples, device="cpu")
+#     print()
 
 
 

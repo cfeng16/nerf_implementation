@@ -10,16 +10,12 @@ def render_from_nerf(nerf_sigma, nerf_rgb, z_vals, rays_d, noise_std):
     noise = torch.randn(nerf_sigma.shape)*noise_std
     sigma = F.relu(noise + nerf_sigma)
     alpha = 1 - torch.exp(-sigma * dists)
-    T = cumprod_exclusive(1. - alpha + 1e-10)
-
-
-
-
-
-
-
-
-
+    transmittence = cumprod_exclusive(1. - alpha + 1e-10)
+    weights = transmittence * alpha 
+    rgb_map = torch.sum(weights[..., None] * nerf_rgb, dim=-1)
+    depth_map = torch.sum(weights * z_vals, dim=-1)
+    acc_map = torch.sum(weights, dim=-1)
+    return rgb_map, depth_map, acc_map, weights
 
 def cumprod_exclusive(
   tensor: torch.Tensor
@@ -45,3 +41,15 @@ def cumprod_exclusive(
   cumprod[..., 0] = 1.
   
   return cumprod
+
+
+
+if __name__ == "__main__":
+    rays_o = torch.rand((25,1))
+    rays_d = torch.rand((25,3))
+    z_vals = torch.rand((25, 100))
+    near = 2
+    far = 6
+    n_samples=20
+    render_from_nerf(rays_o, rays_d,z_vals,rays_d, noise_std=1 )
+    print()
