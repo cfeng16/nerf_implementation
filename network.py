@@ -7,13 +7,11 @@ class nerfmodel(nn.Module):
         self.net = nn.ModuleList([nn.Linear(pos_dim, width)])
         self.layers = layers
         self.skip = skip
-        for i in range(1, self.layers-1, 1):
+        for i in range(1, self.layers, 1):
             if i == self.skip:
                 self.net.append(nn.Linear(pos_dim + width, width))
-                self.net.append(nn.ReLU())
-            elif i != self.layers-1:
+            elif i != self.layers:
                 self.net.append(nn.Linear(width, width))
-                self.net.append(nn.ReLU())
         self.sigmoid = nn.Sigmoid()
         self.relu = nn.ReLU()
         self.net_last = nn.Linear(width, width)
@@ -24,17 +22,19 @@ class nerfmodel(nn.Module):
         pts_copy = input_pts.clone()
         for i in range(self.layers):
             if i == 0:
-                feature = self.net[i](input_pts)
+                feature = self.relu(self.net[i](input_pts))
             elif i == self.skip:
-                feature = self.net[i](torch.cat((feature, pts_copy), dim=-1))
+                feature = self.relu(self.net[i](torch.cat((feature, pts_copy), dim=-1)))
             else:
-                feature = self.net[i](feature)
+                feature = self.relu(self.net[i](feature))
         #density = self.relu(self.sigma(feature))
         density = self.sigma(feature)
         feature = self.net_last(feature)
         rgb_feature = torch.cat((feature, dir), dim=-1)
-        rgb = self.sigmoid(self.rgb(rgb_feature))
-        return density, rgb
+        for rgb_sub_layer in self.rgb:
+            rgb_feature = rgb_sub_layer(rgb_feature)
+        #rgb = self.sigmoid(self.rgb(rgb_feature))
+        return density, rgb_feature
     
         
 

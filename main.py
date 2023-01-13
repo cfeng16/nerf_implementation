@@ -7,6 +7,7 @@ from positional_encoding import positionalencoder
 from sampling import stratified_sampling, hierarachical_sampling, rays_sampling
 from tqdm import tqdm
 import argparse
+from graphics import render_from_nerf
 
 device = torch.device("cuda:0")
 data = np.load('tiny_nerf_data.npz')
@@ -82,3 +83,8 @@ for epoch in range(epochs):
             batches_viewdirs_flat = F.normalize(batches_viewdirs_flat, p=2, dim=-1)
             query_points_flat = pts_pe(query_points_flat)
             batches_viewdirs_flat = dir_pe(batches_viewdirs_flat)
+            sigma, rgb = coarse_model(query_points_flat, batches_viewdirs_flat)
+            sigma = sigma.reshape(query_points.shape[:-1])
+            rgb = rgb.reshape(list(query_points.shape[:-1]) + [3])
+            rgb_map, _, _, _ = render_from_nerf(nerf_sigma=sigma, nerf_rgb=rgb, z_vals=z_vals, rays_d=rays_d_batch, noise_std=1, device=device)
+           
