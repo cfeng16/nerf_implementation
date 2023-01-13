@@ -3,9 +3,8 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-def sample_rays(H, W, F, c2w):
-    i, j = torch.meshgrid(torch.arange(W, dtype=torch.float32).to(c2w), \
-        torch.arange(H, dtype=torch.float32).to(c2w), indexing='xy')
+def rays_sampling(H, W, F, c2w):
+    i, j = torch.meshgrid(torch.arange(W, dtype=torch.float32).to(c2w), torch.arange(H, dtype=torch.float32).to(c2w), indexing='xy')
     dirs = torch.stack([(i - W * .5) / F, -(j - H * .5) / F, -torch.ones_like(i)], dim=-1)
     rays_d = torch.sum(dirs[..., None, :] * c2w[:3, :3], dim=-1)
     rays_o = c2w[:3, -1].expand(rays_d.shape)
