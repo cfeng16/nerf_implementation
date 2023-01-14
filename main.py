@@ -8,6 +8,9 @@ from sampling import stratified_sampling, hierarachical_sampling, rays_sampling
 from tqdm import tqdm
 import argparse
 from graphics import render_from_nerf
+import wandb
+
+# wandb.init(project="nerf_implementation")
 
 device = torch.device("cuda:0")
 data = np.load('tiny_nerf_data.npz')
@@ -91,11 +94,19 @@ for epoch in range(epochs):
             new_query_points, z_vals_combined, new_z_samples = hierarachical_sampling(rays_o=rays_o_batch, rays_d=rays_d_batch, z_vals=z_vals, weights=weights, n_samples=n_samples_hierarchical, device=device)
             new_query_points_flat = torch.flatten(new_query_points, start_dim=0, end_dim=1)
             new_query_points_flat = pts_pe(new_query_points_flat)
-            new_sigma, new_rgb = fine_model(new_query_points_flat, batches_viewdirs_flat)
+            new_batches_viewdirs = rays_d_batch[:, None, ...].expand(new_query_points.shape)
+            new_batches_viewdirs_flat = torch.flatten(new_batches_viewdirs, start_dim=0, end_dim=1)
+            new_batches_viewdirs_flat = F.normalize(new_batches_viewdirs_flat, p=2, dim=-1)
+            new_batches_viewdirs_flat = dir_pe(new_batches_viewdirs_flat)
+            new_sigma, new_rgb = fine_model(new_query_points_flat, new_batches_viewdirs_flat)
+            new_sigma = new_sigma.reshape(new_query_points.shape[:-1])
+            new_rgb = new_rgb.reshape(list(new_query_points.shape[:-1]) + [3])
             rgb_map_new, _, _, _ = render_from_nerf(nerf_sigma=new_sigma, nerf_rgb=new_rgb, z_vals=z_vals_combined, rays_d=rays_d_batch, noise_std=1, device=device)
             loss = criterion(rgb_map_new, rays_rgb_batch)
             coarse_optimizer.zero_grad()
             fine_optimizer.zero_grad()
             loss.backward()
-            coarse_optimizer.update()
-            fine_optimizer.update()
+            coarse_optimizer.step()
+            fine_optimizer.step()
+            pbar.set_postfix({'loss': f'{loss.item():0:1.6f}'})
+            pbar.update(1)

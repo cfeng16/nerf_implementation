@@ -33,7 +33,7 @@ def sample_pdf(bins, weights, n_sample, device):
     ids_g = torch.stack([below, above], dim=-1)
     matched_shape = [ids_g.shape[0], ids_g.shape[1], cdf.shape[-1]]
     cdf_val = torch.gather(cdf.unsqueeze(1).expand(matched_shape), dim=-1, index=ids_g)
-    bins_val = torch.gather(bins[None, None, :].expand(matched_shape), dim=-1, index=ids_g)
+    bins_val = torch.gather(bins[:, None, :].expand(matched_shape), dim=-1, index=ids_g)
     cdf_d = (cdf_val[..., 1] - cdf_val[..., 0])   
     cdf_d = torch.where(cdf_d < 1e-5, torch.ones_like(cdf_d, device=device), cdf_d)
     t = (u - cdf_val[..., 0]) / cdf_d
