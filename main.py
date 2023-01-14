@@ -62,6 +62,7 @@ criterion = nn.MSELoss()
 
 epochs = 10
 n_samples = 64
+n_samples_hierarchical = 64
 
 for epoch in range(epochs):
     train_index = torch.randperm(N)
@@ -86,5 +87,15 @@ for epoch in range(epochs):
             sigma, rgb = coarse_model(query_points_flat, batches_viewdirs_flat)
             sigma = sigma.reshape(query_points.shape[:-1])
             rgb = rgb.reshape(list(query_points.shape[:-1]) + [3])
-            rgb_map, _, _, _ = render_from_nerf(nerf_sigma=sigma, nerf_rgb=rgb, z_vals=z_vals, rays_d=rays_d_batch, noise_std=1, device=device)
-           
+            rgb_map, _, _, weights = render_from_nerf(nerf_sigma=sigma, nerf_rgb=rgb, z_vals=z_vals, rays_d=rays_d_batch, noise_std=1, device=device)
+            new_query_points, z_vals_combined, new_z_samples = hierarachical_sampling(rays_o=rays_o_batch, rays_d=rays_d_batch, z_vals=z_vals, weights=weights, n_samples=n_samples_hierarchical)
+            new_query_points_flat = torch.flatten(new_query_points, start_dim=0, end_dim=1)
+            new_query_points_flat = pts_pe(new_query_points_flat)
+            new_sigma, new_rgb = fine_model(new_query_points_flat, batches_viewdirs_flat)
+            rgb_map_new, _, _, _ = render_from_nerf(nerf_sigma=new_sigma, nerf_rgb=new_rgb, z_vals=z_vals_combined, rays_d=rays_d_batch, noise_std=1, device=device)
+            loss = criterion(rgb_map_new, rays_rgb_batch)
+            coarse_optimizer.zero_grad()
+            fine_optimizer.zero_grad()
+            loss.backward()
+            coarse_optimizer.update()
+            fine_optimizer.update()
