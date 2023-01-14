@@ -108,5 +108,5 @@ for epoch in range(epochs):
             loss.backward()
             coarse_optimizer.step()
             fine_optimizer.step()
-            pbar.set_postfix({'loss': f'{loss.item():0:1.6f}'})
+            pbar.set_postfix({'loss': '{0:1.6f}'.format(loss.item())})
             pbar.update(1)
