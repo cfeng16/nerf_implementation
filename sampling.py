@@ -41,9 +41,9 @@ def sample_pdf(bins, weights, n_sample, device):
     return samples
 
 
-def hierarachical_sampling(rays_o, rays_d, z_vals, weights, n_samples):
+def hierarachical_sampling(rays_o, rays_d, z_vals, weights, n_samples, device):
     z_vals_mid = .5 * (z_vals[..., 1:] + z_vals[..., :-1])
-    new_z_samples = sample_pdf(z_vals_mid, weights[..., 1:-1], n_samples)
+    new_z_samples = sample_pdf(z_vals_mid, weights[..., 1:-1], n_samples, device)
     new_z_samples = new_z_samples.detach()
     z_vals_combined, _ = torch.sort(torch.cat([z_vals, new_z_samples], dim=-1), dim=-1)
     pts = rays_o[..., None, :] + rays_d[..., None, :] * z_vals_combined[..., :, None]  # [N_rays, N_samples + n_samples, 3]
