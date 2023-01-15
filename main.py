@@ -65,7 +65,7 @@ test_rgb = testimg.to(device)
 
 
 N = rays_o.shape[0]
-bs = 8192
+bs = 4096
 iterations = N // bs
 
 
@@ -79,7 +79,7 @@ pts_pe = positionalencoder(L=10)
 dir_pe = positionalencoder(L=4)
 criterion = nn.MSELoss()
 
-epochs = 15
+epochs = 20
 n_samples = 64
 n_samples_hierarchical = 64
 
