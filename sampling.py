@@ -19,7 +19,7 @@ def stratified_sampling(rays_o, rays_d, near, far, n_samples, device):
     t_rand = torch.rand([n_samples], device=device)
     z_vals = lower + (upper-lower)*t_rand
     z_vals = z_vals.expand(list(rays_o.shape[:-1]) + [n_samples])
-    pts = rays_o[..., None, :] + rays_d[..., None, :] * z_vals[..., :, None]
+    pts = rays_o[..., None, :] + rays_d[..., None, :] * z_vals[..., None]
     return pts, z_vals
 
 def sample_pdf(bins, weights, n_sample, device):

@@ -7,8 +7,12 @@ def render_from_nerf(nerf_sigma, nerf_rgb, z_vals, rays_d, noise_std, device):
     dists = z_vals[..., 1:] - z_vals[..., :-1]
     dists = torch.cat([dists, 1e10 * torch.ones_like(dists[..., :1])], dim=-1)
     dists = dists * torch.norm(rays_d[..., None, :], dim=-1)
-    noise = torch.randn(nerf_sigma.shape, device=device)*noise_std
-    sigma = F.relu(noise + nerf_sigma)
+    if noise_std > 1:
+      noise = torch.randn(nerf_sigma.shape, device=device)*noise_std
+      sigma = F.relu(noise + nerf_sigma)
+    else:
+      sigma = F.relu(nerf_sigma)
+    # sigma = F.relu(nerf_sigma)
     alpha = 1 - torch.exp(-sigma * dists)
     transmittence = cumprod_exclusive(1. - alpha + 1e-10)
     weights = transmittence * alpha 
@@ -16,6 +20,7 @@ def render_from_nerf(nerf_sigma, nerf_rgb, z_vals, rays_d, noise_std, device):
     depth_map = torch.sum(weights * z_vals, dim=-1)
     acc_map = torch.sum(weights, dim=-1)
     return rgb_map, depth_map, acc_map, weights
+
 
 def cumprod_exclusive(
   tensor: torch.Tensor

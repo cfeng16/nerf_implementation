@@ -9,11 +9,11 @@ class positionalencoder(nn.Module):
         self.freq_list = []
         self.L = L
         for i in range(L):
-            self.freq_list.append(2**i)
+            self.freq_list.append(2.0**i)
 
     def forward(self, x):
         pe = []
-        pe.append(x)
+        #pe.append(x)
         for i in range(self.L):
             pe.append(torch.sin(self.freq_list[i]*x))
             pe.append(torch.cos(self.freq_list[i]*x))

@@ -1,5 +1,6 @@
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
 
 class nerfmodel(nn.Module):
     def __init__(self, pos_dim, dir_dim, layers=8, width=256, skip=4):
@@ -17,6 +18,7 @@ class nerfmodel(nn.Module):
         self.net_last = nn.Linear(width, width)
         self.sigma = nn.Linear(width, 1)
         self.rgb = nn.ModuleList([nn.Linear(dir_dim + width, width // 2)])
+        self.rgb.append(nn.ReLU())
         self.rgb.append(nn.Linear(width // 2, 3))
     def forward(self, input_pts, dir):
         pts_copy = input_pts.clone()
@@ -33,8 +35,7 @@ class nerfmodel(nn.Module):
         rgb_feature = torch.cat((feature, dir), dim=-1)
         for rgb_sub_layer in self.rgb:
             rgb_feature = rgb_sub_layer(rgb_feature)
-        #rgb = self.sigmoid(self.rgb(rgb_feature))
+        rgb_feature = self.sigmoid(rgb_feature)
         return density, rgb_feature
     
-        
 
